@@ -18,7 +18,7 @@ def convert(input_file, output_dir):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Convert shell output to log of tensorboard!')
     parser.add_argument("-i", "--input", type=str, help="input filelist")
-    parser.add_argument("-o", "--output_dir", type=str, default='logdir_convert' help="output dir")
+    parser.add_argument("-o", "--output_dir", type=str, default='logdir_convert', help="output dir")
     args = parser.parse_args()
     if args.input:
         convert(args.input, args.output)
