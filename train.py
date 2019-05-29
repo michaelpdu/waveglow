@@ -27,6 +27,7 @@
 import argparse
 import json
 import os
+import time
 import torch
 
 #=====START: ADDED FOR DISTRIBUTED======
@@ -37,6 +38,7 @@ from torch.utils.data.distributed import DistributedSampler
 from torch.utils.data import DataLoader
 from glow import WaveGlow, WaveGlowLoss
 from mel2samp import Mel2Samp
+from logger import WaveglowLogger
 
 def load_checkpoint(checkpoint_path, model, optimizer):
     assert os.path.isfile(checkpoint_path)
@@ -64,8 +66,11 @@ def save_checkpoint(model, optimizer, learning_rate, iteration, filepath):
                 'optimizer': optimizer.state_dict(),
                 'learning_rate': learning_rate}, filepath)
 
-def train(num_gpus, rank, group_name, output_directory, epochs, learning_rate,
-          sigma, iters_per_checkpoint, batch_size, seed, fp16_run,
+def train(num_gpus, rank, group_name, 
+          output_directory, log_directory, 
+          epochs, learning_rate,
+          sigma, iters_per_checkpoint, 
+          batch_size, seed, fp16_run,
           checkpoint_path):
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
@@ -111,6 +116,7 @@ def train(num_gpus, rank, group_name, output_directory, epochs, learning_rate,
             os.makedirs(output_directory)
             os.chmod(output_directory, 0o775)
         print("output directory", output_directory)
+        logger = WaveglowLogger(os.path.join(output_directory, log_directory))
 
     model.train()
     epoch_offset = max(0, int(iteration / len(train_loader)))
@@ -121,6 +127,7 @@ def train(num_gpus, rank, group_name, output_directory, epochs, learning_rate,
     for epoch in range(epoch_offset, epochs):
         print("Epoch: {}".format(epoch))
         for i, batch in enumerate(train_loader):
+            start = time.perf_counter()
             model.zero_grad()
 
             mel, audio = batch
@@ -143,6 +150,10 @@ def train(num_gpus, rank, group_name, output_directory, epochs, learning_rate,
             optimizer.step()
 
             print("{}:\t{:.9f}".format(iteration, reduced_loss))
+
+            if rank == 0:
+                duration = time.perf_counter() - start
+                logger.log_training(reduced_loss, duration, iteration)
 
             if (iteration % iters_per_checkpoint == 0):
                 if rank == 0:
