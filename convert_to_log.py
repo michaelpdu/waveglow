@@ -21,6 +21,6 @@ if __name__ == '__main__':
     parser.add_argument("-o", "--output_dir", type=str, default='logdir_convert', help="output dir")
     args = parser.parse_args()
     if args.input:
-        convert(args.input, args.output)
+        convert(args.input, args.output_dir)
     else:
         parser.print_help()
