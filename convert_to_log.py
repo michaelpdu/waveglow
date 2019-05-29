@@ -1,11 +1,12 @@
 import os
 import re
+import shutil
 import argparse
 from logger import WaveglowLogger
 
 def convert(input_file, output_dir):
     if os.path.exists(output_dir):
-        os.remove(output_dir)
+        shutil.rmtree(output_dir) 
     logger = WaveglowLogger(output_dir)
     with open(input_file, 'r') as fh:
         for line in fh.readlines():
@@ -13,7 +14,9 @@ def convert(input_file, output_dir):
             if m:
                 iteration = m.group(1)
                 loss = m.group(2)
+                # print('iteration:', iteration, ', loss:', loss)
                 logger.log(loss, iteration)
+    print('Convert completely!')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Convert shell output to log of tensorboard!')
