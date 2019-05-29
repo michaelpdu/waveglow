@@ -4,6 +4,8 @@ import argparse
 from logger import WaveglowLogger
 
 def convert(input_file, output_dir):
+    if os.path.exists(output_dir):
+        os.remove(output_dir)
     logger = WaveglowLogger(output_dir)
     with open(input_file, 'r') as fh:
         for line in fh.readlines():
@@ -16,7 +18,7 @@ def convert(input_file, output_dir):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Convert shell output to log of tensorboard!')
     parser.add_argument("-i", "--input", type=str, help="input filelist")
-    parser.add_argument("-o", "--output_dir", type=str, help="output dir")
+    parser.add_argument("-o", "--output_dir", type=str, default='logdir_convert' help="output dir")
     args = parser.parse_args()
     if args.input:
         convert(args.input, args.output)
