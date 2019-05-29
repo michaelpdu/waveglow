@@ -41,8 +41,13 @@ from mel2samp import Mel2Samp
 def load_checkpoint(checkpoint_path, model, optimizer):
     assert os.path.isfile(checkpoint_path)
     checkpoint_dict = torch.load(checkpoint_path, map_location='cpu')
-    iteration = checkpoint_dict['iteration']
-    optimizer.load_state_dict(checkpoint_dict['optimizer'])
+    print('checkpoint dict:', checkpoint_dict)
+    if 'iteration' in checkpoint_dict:
+        iteration = checkpoint_dict['iteration']
+    else:
+        iteration = 0
+    if 'optimizer' in checkpoint_dict:
+        optimizer.load_state_dict(checkpoint_dict['optimizer'])
     model_for_loading = checkpoint_dict['model']
     model.load_state_dict(model_for_loading.state_dict())
     print("Loaded checkpoint '{}' (iteration {})" .format(
@@ -109,6 +114,9 @@ def train(num_gpus, rank, group_name, output_directory, epochs, learning_rate,
 
     model.train()
     epoch_offset = max(0, int(iteration / len(train_loader)))
+
+    # 
+
     # ================ MAIN TRAINNIG LOOP! ===================
     for epoch in range(epoch_offset, epochs):
         print("Epoch: {}".format(epoch))
@@ -144,6 +152,10 @@ def train(num_gpus, rank, group_name, output_directory, epochs, learning_rate,
                                     checkpoint_path)
 
             iteration += 1
+
+    if rank == 0:
+        checkpoint_path = "{}/waveglow_{}".format(output_directory, iteration)
+        save_checkpoint(model, optimizer, learning_rate, iteration, checkpoint_path)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

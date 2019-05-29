@@ -181,4 +181,6 @@ if __name__ == '__main__':
         help='double quoted string with space separated key value pairs')
 
     args = parser.parse_args()
+    start = time.time()
     main(args.config, args.stdout_dir, args.args_str)
+    print('Duration:', time.time() - start)
